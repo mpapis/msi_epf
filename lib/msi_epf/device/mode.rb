@@ -12,44 +12,49 @@ module MsiEpf
         :demo     => 4,
         :always   => 5,
       }
-      SUPPORTED_ENABLED = {
-        false => 0,
-        true  => 1,
+      SUPPORTED_STATE = {
+        :disabled => 0,
+        :enabled  => 1,
       }
 
+      # setting :disabled also does state=:disabled,
+      # setting actve mode after disabled does state=:enabled
       def mode=(_mode)
+        mode_state[1] = 1 if mode_state[1] == 0 && mode_state[0] == 0 && _mode != :disabled
         @mode_state = run_mode_request(0x01, 0x02, 0x20, mode_to_value(_mode), mode_state[1])
+        mode
       end
 
       def mode
         value_to_mode(mode_state[0])
       end
 
-      def enabled=(_enabled)
-        @mode_state = run_mode_request(0x01, 0x02, 0x20, mode_state[0], enabled_to_value(_enabled))
-        enabled
+      # control state without changing mode
+      def state=(_state)
+        @mode_state = run_mode_request(0x01, 0x02, 0x20, mode_state[0], state_to_value(_state))
+        state
       end
 
-      def enabled
-        value_to_enabled(mode_state[1])
+      def state
+        value_to_state(mode_state[1])
       end
 
     private
 
-      def mode_to_value(mode)
-        SUPPORTED_MODES[mode] or raise "unknown mode #{mode}"
+      def mode_to_value(_mode)
+        SUPPORTED_MODES[_mode] or raise "unknown mode #{_mode}"
       end
 
       def value_to_mode(value)
         SUPPORTED_MODES.key(value) or raise "unknown mode value #{value}"
       end
 
-      def enabled_to_value(enabled)
-        SUPPORTED_ENABLED[enabled] or raise "unknown enabled #{enabled}"
+      def state_to_value(_enabled)
+        SUPPORTED_STATE[_enabled] or raise "unknown enabled #{_enabled}"
       end
 
-      def value_to_enabled(value)
-        SUPPORTED_ENABLED.key(value) or raise "unknown enabled value #{enabled}"
+      def value_to_state(value)
+        SUPPORTED_STATE.key(value) or raise "unknown enabled value #{value}"
       end
 
       def run_mode_request(*args)
