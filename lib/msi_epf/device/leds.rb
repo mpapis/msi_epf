@@ -4,27 +4,26 @@
 module MsiEpf
   class Device
     module Leds
-      LEDS_BACK  = 0x01
-      LEDS_SIDE  = 0x02
-      LEDS_FRONT = 0x04
-      LEDS_ALL   = LEDS_BACK | LEDS_SIDE | LEDS_FRONT
+      SUPPORTED_LEDS = {
+        :back  => 0x01,
+        :side  => 0x02,
+        :front => 0x04,
+      }
 
       def leds_to_value(leds = [])
-        value = 0
-        value |= LEDS_BACK  if leds.include? :back
-        value |= LEDS_SIDE  if leds.include? :side
-        value |= LEDS_FRONT if leds.include? :front
-        value |= LEDS_ALL   if leds.include? :all
-        value
+        unsupported_leds = leds.reject{|led| SUPPORTED_LEDS.keys.include?(led)}
+        unless unsupported_leds.empty?
+          raise "unsupported led type #{unsupported_leds.map{|led| "'#{led}'"}.join(", ")}"
+        end
+        leds.map{|led| SUPPORTED_LEDS[led]}.inject(&:|)
       end
 
       def value_to_leds(value)
-        leds = []
         value = value[3].unpack('C')[0]
-        leds << :back  if value & LEDS_BACK  == LEDS_BACK
-        leds << :side  if value & LEDS_SIDE  == LEDS_SIDE
-        leds << :front if value & LEDS_FRONT == LEDS_FRONT
-        leds
+        unless SUPPORTED_LEDS.values.inject(&:|) & value == value
+          raise "unsupported led value #{SUPPORTED_LEDS.values.inject(&:|) ^ value}"
+        end
+        SUPPORTED_LEDS.map{|led, val| value & val == val ? led : nil}.compact
       end
 
       def leds=(leds = [])
