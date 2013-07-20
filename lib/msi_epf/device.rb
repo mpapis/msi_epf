@@ -37,8 +37,10 @@ module MsiEpf
       @handle
     end
 
-    def open(&block)
+    def open(reset = false, &block)
       @handle = @device.open
+      @handle.reset_device if reset
+      @handle.detach_kernel_driver(0) if @handle.kernel_driver_active?(0)
       @handle.claim_interface(0)
       if block_given?
         begin
@@ -51,6 +53,7 @@ module MsiEpf
 
     def close
       @handle.release_interface(0)
+      @handle.atach_kernel_driver(0) if @handle.kernel_driver_active?(0)
       @handle.close
     ensure
       @handle = @device = nil
