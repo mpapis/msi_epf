@@ -4,43 +4,60 @@
 module MsiEpf
   class Device
     module Mode
-      MODE_BLINK  = 0x01
-      MODE_AUDIO  = 0x02
-      MODE_BREATH = 0x03
-      MODE_DEMO   = 0x04
-      MODE_ALWAYS = 0x05
+      SUPPORTED_MODES = {
+        :disabled => 0,
+        :blink    => 1,
+        :audio    => 2,
+        :breath   => 3,
+        :demo     => 4,
+        :always   => 5,
+      }
+      SUPPORTED_ENABLED = {
+        false => 0,
+        true  => 1,
+      }
 
-      def mode_to_value(mode)
-        case mode
-        when :disabled then [0, 0]
-        when :blink    then [MODE_BLINK,  1]
-        when :audio    then [MODE_AUDIO,  1]
-        when :breath   then [MODE_BREATH, 1]
-        when :demo     then [MODE_DEMO,   1]
-        when :always   then [MODE_ALWAYS, 1]
-        else raise "unknown mode #{mode}"
-        end
-      end
-
-      def value_to_mode(value)
-        value_mode, value_enabled = value[3,4].each_byte.to_a
-        return :disabled if value_enabled == 0
-        case value_mode
-        when MODE_BLINK  then :blink
-        when MODE_AUDIO  then :audio
-        when MODE_BREATH then :breath
-        when MODE_DEMO   then :demo
-        when MODE_ALWAYS then :always
-        else raise "unknown value #{value_mode.class}:#{value_mode} - #{value_enabled}"
-        end
-      end
-
-      def mode=(mode)
-        value_to_mode run_control_request(0x01, 0x02, 0x20, *mode_to_value(mode))
+      def mode=(_mode)
+        @mode_state = run_mode_request(0x01, 0x02, 0x20, mode_to_value(_mode), mode_state[1])
       end
 
       def mode
-        value_to_mode run_control_request(0x01, 0x01, 0x10)
+        value_to_mode(mode_state[0])
+      end
+
+      def enabled=(_enabled)
+        @mode_state = run_mode_request(0x01, 0x02, 0x20, mode_state[0], enabled_to_value(_enabled))
+        enabled
+      end
+
+      def enabled
+        value_to_enabled(mode_state[1])
+      end
+
+    private
+
+      def mode_to_value(mode)
+        SUPPORTED_MODES[mode] or raise "unknown mode #{mode}"
+      end
+
+      def value_to_mode(value)
+        SUPPORTED_MODES.key(value) or raise "unknown mode value #{value}"
+      end
+
+      def enabled_to_value(enabled)
+        SUPPORTED_ENABLED[enabled] or raise "unknown enabled #{enabled}"
+      end
+
+      def value_to_enabled(value)
+        SUPPORTED_ENABLED.key(value) or raise "unknown enabled value #{enabled}"
+      end
+
+      def run_mode_request(*args)
+        run_control_request(*args)[3..4].each_byte.to_a
+      end
+
+      def mode_state
+        @mode_state ||= run_mode_request(0x01, 0x01, 0x10)
       end
 
     end
