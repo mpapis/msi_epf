@@ -17,8 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 License: GNU-AGPL-3.0.txt
 =end
 
-require "libusb"
 require 'optparse'
 
-class MsiEpf
+module MsiEpf
 end
