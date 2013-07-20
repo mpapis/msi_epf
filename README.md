@@ -24,3 +24,7 @@ There is no read for leds - not sure if it's even supported on interface level.
 
 Copyright (C) 2013  Michal Papis <mpapis@gmail.com>
 License text: GNU-AGPL-3.0.txt
+
+# Thanks to
+
+- https://github.com/aljen/gtlm
