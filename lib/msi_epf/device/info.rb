@@ -13,10 +13,16 @@ module MsiEpf
       end
 
       def dump
-        (0..0x64).each{|x|
+        (0..0xff).each{|x|
           result = run_control_request 0x01, 0x01, x
           puts "%-2x: %3s, %3s, %3s, %3s, %3s, %3s, %3s, %3s" % ([x] + result.each_byte.map{|c|c.to_s})
         }
+      end
+
+      def run_custom(*args)
+        puts "running: #{args.map{|c|"%3s" % c.to_s}*", "}"
+        result = run_control_request *args
+        puts "result : #{result.each_byte.map{|c|"%3s" % c.to_s}*", "}"
       end
 
       def tree
